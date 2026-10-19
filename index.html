@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QmJKG2WZsqt3jK2UtCb9dnER31Jt73YcAcdp4UN1WOc='; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; media-src 'none'; manifest-src 'none'" />
+<meta name="referrer" content="no-referrer" />
+<meta name="theme-color" content="#080f24" />
+<title>終極密碼｜Ultimate Password</title>
+<style>
+  :root { color-scheme: dark; --bg:#080e20; --panel:#0b1832; --panel2:#102344; --line:rgba(66,204,252,.42); --neon:#4cc9f5; --purple:#ab86e8; --text:#eaf5ff; --muted:#a0b3ce; --danger:#ff879f; --ok:#8ee5cc; --radius:20px; }
+  * { box-sizing:border-box; }
+  html { min-height:100%; }
+  body { margin:0; min-height:100vh; font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; color:var(--text); background: radial-gradient(ellipse at 15% 10%,#1b2358 0%,transparent 38%),radial-gradient(ellipse at 90% 78%,#1d1450 0%,transparent 48%),#070d1e; line-height:1.5; }
+  button,input { font:inherit; }
+  button { cursor:pointer; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button:focus-visible,input:focus-visible { outline:2px solid #b4e9ff;outline-offset:3px; }
+  [hidden] { display:none!important; }
+  .bg-grid { position:fixed;inset:0;pointer-events:none;opacity:.25;background-image:linear-gradient(rgba(66,168,231,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(66,168,231,.08) 1px,transparent 1px);background-size:29px 29px;mask-image:linear-gradient(to bottom,transparent 1%,black 34%,black 80%,transparent); }
+  .app { max-width:1500px;margin:0 auto;padding:14px clamp(12px,2vw,28px) 22px;position:relative; }
+  .topbar { display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 6px 12px;min-height:74px;position:relative; }
+  .topbar::after { content:"";height:2px;position:absolute;bottom:4px;left:0;right:0;background:linear-gradient(90deg,transparent,#5bdafa 18%,#7d6bd0 65%,transparent);box-shadow:0 0 12px #4a9eff70; }
+  .brand {display:flex;align-items:center;gap:22px;min-width:0;}
+  .brand h1 {margin:0;white-space:nowrap;font-size:clamp(28px,3.4vw,50px);letter-spacing:.11em;line-height:1.1;font-weight:900;color:#e6f5ff;text-shadow:0 2px 0 #8e82c6,0 0 18px rgba(116,183,255,.38),0 0 26px rgba(120,80,213,.18); }
+  .stage-chip {white-space:nowrap;max-width:280px;padding:7px 18px;border:1px solid #826bd4;border-radius:5px 17px 5px 17px;background:linear-gradient(105deg,rgba(47,42,107,.85),rgba(12,34,64,.87));box-shadow:inset 0 0 18px #6658c525,0 0 15px #725ac342;font-weight:800;letter-spacing:.06em;font-size:clamp(13px,1.5vw,21px);}
+  .top-decor {display:flex;align-items:center;gap:10px;color:#88cfe6;opacity:.75;flex:0 1 300px;}
+  .top-decor small {font:700 12px ui-monospace,monospace;letter-spacing:2px;color:#789dc9;}
+  /* 區間可視化：暗色刻度作底，柔亮的實線呈現仍可能的範圍。 */
+  .number-track {position:relative;flex:1;height:13px;min-width:0;border:1px solid rgba(82,145,194,.72);border-radius:999px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),rgba(128,182,228,.24) calc(10% - 1px),rgba(128,182,228,.24) 10%),linear-gradient(90deg,#102847,#16243f);box-shadow:inset 0 1px 5px rgba(0,0,0,.5);}
+  .number-track .track-fill {position:absolute;left:0;top:2px;width:100%;height:calc(100% - 4px);border-radius:999px;background:linear-gradient(90deg,#69dcf4 0%,#8ccdf4 48%,#b4b1ef 100%);box-shadow:0 0 7px rgba(106,222,249,.66),0 0 15px rgba(122,170,243,.34);transition:left .52s cubic-bezier(.22,1,.36,1),width .52s cubic-bezier(.22,1,.36,1);}
+  .number-track .track-fill.single-point {box-shadow:none;}
+  .number-track .marker {position:absolute;top:50%;left:0;width:14px;height:14px;border:2px solid #e8f8ff;border-radius:50%;transform:translate(-50%,-50%);transition:left .52s cubic-bezier(.22,1,.36,1),opacity .25s ease;z-index:1;}
+  .number-track .marker.start {background:#79e0f3;box-shadow:0 0 9px rgba(110,229,255,.75),0 0 18px rgba(103,220,251,.26);}
+  .number-track .marker.end {left:100%;background:#b4b8f3;box-shadow:0 0 9px rgba(183,188,255,.7),0 0 18px rgba(171,175,252,.26);}
+  .panel {position:relative;border:1px solid #396fa5;border-radius:var(--radius);background:linear-gradient(135deg,rgba(13,30,64,.97),rgba(7,18,39,.97));box-shadow:inset 0 0 0 1px rgba(85,207,255,.07),inset 0 0 38px rgba(25,100,183,.09),0 14px 40px rgba(0,0,0,.24),0 0 17px #315bc342;overflow:hidden; }
+  .panel::before {content:"";pointer-events:none;position:absolute;inset:0;border-top:3px solid rgba(78,203,248,.8);border-left:3px solid rgba(114,93,203,.47);border-radius:inherit;opacity:.8; }
+  .panel::after {content:"";pointer-events:none;position:absolute;right:14px;bottom:12px;width:50px;height:25px;border-right:2px solid #359aca66;border-bottom:2px solid #359aca66;clip-path:polygon(25% 100%,100% 15%,100% 100%); }
+  .tech-lines {position:absolute;inset:0;pointer-events:none;opacity:.21;background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(66,188,254,.09) 27px),repeating-linear-gradient(90deg,transparent 0 30px,rgba(91,80,195,.08) 31px); }
+  .main-layout {display:grid;grid-template-columns:1.08fr .92fr;gap:14px;align-items:stretch;}
+  .game-board {padding:18px clamp(14px,2vw,24px) 18px;min-height:620px;display:flex;flex-direction:column;gap:10px;}
+  .game-board .board-body {position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:250px;}
+  .game-board .board-body::before {content:"50  ·  25  ·  75";position:absolute;left:-8px;top:19%;writing-mode:vertical-rl;letter-spacing:14px;color:#3bb8ed;opacity:.20;font:700 18px monospace;pointer-events:none;}
+  .game-board .board-body::after {content:"01  ·  34  ·  100";position:absolute;right:-8px;top:22%;writing-mode:vertical-rl;letter-spacing:12px;color:#3bb8ed;opacity:.17;font:700 18px monospace;pointer-events:none;}
+  .ring {position:relative;width:min(100%,395px);aspect-ratio:1.08;margin:4px auto 8px;touch-action:pan-y;}
+  .ring-loop {position:absolute;width:66%;height:73%;left:17%;top:13%;border:9px solid #43c9f0a6;border-radius:50%;box-shadow:0 0 19px #3ebeff46,inset 0 0 15px #3277e755;pointer-events:none;}
+  .ring-inner {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:140px;pointer-events:none;}
+  .ring-inner .turn-arrow {font-size:43px;line-height:1;color:#84dcff;text-shadow:0 0 12px #43caff88;display:block;}
+  .ring-inner .turn-text {color:#d7eefe;font-size:15px;font-weight:700;letter-spacing:.03em;}
+  .seat {position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;transform:translate(-50%,-50%);width:116px;height:105px;z-index:2;}
+  .player-token {appearance:none;border:0;background:transparent;display:flex;align-items:center;flex-direction:column;justify-content:center;gap:5px;width:100%;padding:2px;color:var(--text);touch-action:none;user-select:none;-webkit-user-select:none;position:relative;transition:filter .15s;}
+  .player-token .avatar {height:65px;width:65px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(150deg,var(--tint),#0b1733 95%);border:3px solid var(--tint);color:#f3fbff;box-shadow:0 0 12px var(--glow),inset 0 0 18px #040b21a8;font-size:27px;transition:all .2s;}
+  .player-token .avatar svg {width:33px;height:33px;filter:drop-shadow(0 0 5px #c4efff50);}
+  .player-token .name {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;max-width:112px;min-width:69px;padding:3px 7px;font-size:var(--name-size,13px);font-weight:750;background:#07152ee0;border:1px solid var(--tint);border-radius:7px;box-shadow:0 0 8px var(--glow);line-height:1.4;}
+  /* 目前玩家：以穩定的霓虹環光辨識，不使用週期性亮度動畫。 */
+  .player-token.active .avatar {outline:2px solid rgba(205,231,255,.78);outline-offset:5px;box-shadow:0 0 0 6px rgba(194,201,255,.10),0 0 19px var(--glow),0 0 32px var(--glow),inset 0 0 13px rgba(255,255,255,.10);filter:brightness(1.08);animation:none;}
+  .player-token.active .name {background:#353079;border-color:#c3b2ff;}
+  .player-token.loser .avatar {border-color:#ff9aaf;box-shadow:0 0 25px #fa6c9daa,0 0 0 6px #fa6c9d26;}
+  .player-token.selectable:hover .avatar,.player-token.selected .avatar {transform:scale(1.08);box-shadow:0 0 0 5px #ffffff22,0 0 23px var(--glow);}
+  .player-token.dragging {z-index:10;transition:none;filter:brightness(1.2);}
+  .seat.drop-target .avatar {outline:3px dashed #bdf2ff;outline-offset:5px;}
+  .seat.swap-selected .avatar {outline:3px solid #bdf2ff;outline-offset:6px;}
+  .ring.seating .player-token {cursor:grab;}
+  .ring.seating .player-token.dragging {cursor:grabbing;}
+  .small-kicker {font-size:12px;font-weight:750;letter-spacing:.15em;color:#92d9f9;text-transform:uppercase;}
+
+  .board-range-track {width:min(100%,520px);margin:0 auto 2px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:1px solid rgba(70,189,231,.55);background:linear-gradient(110deg,rgba(10,31,67,.92),rgba(7,18,39,.94));box-shadow:inset 0 0 18px rgba(42,127,196,.12),0 0 12px rgba(40,138,221,.18);}
+  .board-range-track .edge-label {font:800 16px/1 ui-monospace,Consolas,monospace;color:#dff8ff;text-shadow:0 0 8px rgba(67,198,255,.38);}
+  .board-range-track .status-label {font-size:11px;font-weight:750;letter-spacing:.14em;color:#92d9f9;text-transform:uppercase;opacity:.92;}
+  .number-track.compact {height:15px;box-shadow:inset 0 1px 5px rgba(0,0,0,.5),0 0 9px rgba(72,159,216,.16);}
+  .number-track.compact .marker {top:50%;width:15px;height:15px;}
+  .track-stack {display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .track-stack .number-track {flex:none;height:15px;}
+  .range-box {width:min(100%,480px);margin:0 auto;background:linear-gradient(110deg,#0c2953d9,#0b1a40ed);border:1px solid #46bde7;border-radius:13px;padding:8px 14px 10px;text-align:center;box-shadow:inset 0 0 20px #1f92ca22,0 0 14px #288add41;position:relative;}
+  .range-num {font:850 clamp(32px,4.2vw,56px)/1.14 ui-monospace,Consolas,"Microsoft JhengHei",monospace;color:#defaff;letter-spacing:.03em;text-shadow:0 0 12px #43c6ff72;}
+  .range-num.animated {animation:range-pop .4s ease-out;}
+  .input-card {margin-top:0;border:1px solid #7254b5;border-radius:15px;padding:15px 18px 16px;background:linear-gradient(120deg,#251747bb,#0a2450dd);box-shadow:inset 0 0 18px #8452b528;}
+  .input-title {margin:0 0 12px;text-align:center;color:#f0ebff;font-size:clamp(17px,2vw,22px);font-weight:800;}
+  .guess-input, .name-input {width:100%;min-height:48px;border-radius:10px;border:1px solid #6387bb;background:#edf6ff;color:#173050;font-size:17px;padding:10px 15px;outline:none;}
+  .guess-input::placeholder,.name-input::placeholder {color:#607994;}
+  .guess-input:focus,.name-input:focus {box-shadow:0 0 0 3px #47caff77;}
+  .guess-input {text-align:center;font-size:22px;font-weight:750;letter-spacing:.04em;}
+  .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:11px 18px;border-radius:10px;border:1px solid #4a97c4;background:#112f54;color:#e8f7ff;font-weight:750;text-decoration:none;transition:transform .16s,filter .16s,box-shadow .16s;}
+  .btn:not(:disabled):hover {filter:brightness(1.15);transform:translateY(-1px);}
+  .btn-primary {border:1px solid #80d4ff;background:linear-gradient(105deg,#2553ad,#3268bf 50%,#423aa0);box-shadow:0 0 14px #268bee45,inset 0 0 13px #89e1ff24;color:white;}
+  .btn-secondary {background:linear-gradient(110deg,#0c2850,#1e1b50);border-color:#6e87ce;}
+  .btn-ghost {background:#0b2142b3;border-color:#49688e;}
+  .btn-danger {border-color:#a86982;background:#653047;color:#fff0f4;}
+  .btn-wide {width:100%;}
+  .feedback {min-height:24px;margin:7px 0 0;font-size:13px;color:var(--danger);text-align:center;}
+  .feedback.success {color:var(--ok);}
+  .records-panel {padding:18px 18px 18px;min-height:620px;display:flex;flex-direction:column;}
+  .records-header {display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 17px;border-bottom:1px solid #2d7bac;}
+  .records-header h2 {margin:0;font-size:clamp(20px,2vw,28px);letter-spacing:.05em;color:#e5f6ff;}
+  .record-count {color:#9ebdda;font-size:13px;}
+  .records-scroll {margin-top:12px;max-height:390px;min-height:165px;overflow:auto;border:1px solid #326f9c;border-radius:9px;scrollbar-color:#4576aa #10213f;}
+  .records-table {width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px;}
+  .records-table th {position:sticky;top:0;background:#173257;color:#bde8fa;font-weight:750;padding:13px 6px;border-bottom:1px solid #327fa7;z-index:1;}
+  .records-table td {padding:12px 6px;text-align:center;border-top:1px solid #294568;color:#e1effb;word-wrap:break-word;overflow-wrap:anywhere;}
+  .records-table th:not(:last-child),.records-table td:not(:last-child) {border-right:1px solid #254468;}
+  .records-table tr:last-child td {background:#2c3b6b45;}
+  .records-table th:first-child {width:15%;} .records-table th:nth-child(2) {width:31%;} .records-table th:nth-child(3) {width:23%;} .records-table th:nth-child(4) {width:31%;}
+  .empty-state {padding:48px 20px;text-align:center;color:#879fba;font-size:15px;}
+  .record-note {padding-top:18px;margin-top:auto;color:#7e9fbf;font:12px/1.8 ui-monospace,monospace;letter-spacing:1px;}
+  .records-actions {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+  .actions-hint {display:block;font-size:11px;font-weight:500;color:#a9bfd5;line-height:1.35;}
+  .actions-btn {flex-direction:column;gap:3px;padding:9px 7px;min-height:69px;text-align:center;font-size:14px;}
+  .single-screen {max-width:1030px;margin:0 auto;padding:clamp(22px,3vw,42px);min-height:500px;}
+  .step-label {display:inline-block;padding:5px 11px;border-radius:999px;border:1px solid #5b93c0;color:#a5d9f2;font-size:12px;font-weight:750;letter-spacing:.1em;}
+  .screen-title {margin:13px 0 8px;font-size:clamp(26px,3vw,39px);letter-spacing:.04em;color:#eaf7ff;}
+  .lead {color:#adbfdb;margin:0 0 24px;line-height:1.8;}
+  .form-subtitle {font-weight:800;color:#d8e9ff;margin:6px 0 13px;}
+  .count-row {display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
+  .count-btn {width:58px;height:54px;font-size:21px;font-weight:900;background:#0d2a53;border:1px solid #437aa9;color:#c2dafa;border-radius:11px;}
+  .count-btn.on {background:#225ba6;border-color:#8bdeff;box-shadow:0 0 15px #47bcff65;color:#fff;}
+  .player-form-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;}
+  .player-form-field label {display:block;margin-bottom:8px;color:#c3daf0;font-size:14px;font-weight:750;}
+  .field-warn {font-size:12px;color:#b9a9ce;line-height:1.6;margin:6px 0 0;}
+  .field-warn.over {color:#e8b3c9;}
+  .form-footer {display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:28px;flex-wrap:wrap;}
+  .help-box {margin-top:20px;padding:12px 15px;border:1px solid #3d6385;border-radius:9px;background:#0b254877;color:#abc4dc;font-size:13px;line-height:1.75;}
+  .seating-layout {display:grid;grid-template-columns:minmax(300px,1fr) minmax(230px,.75fr);align-items:center;gap:22px;}
+  .seating-layout .ring {width:min(100%,475px);}
+  .tip-list {margin:0;padding-left:1.35em;color:#b5cae0;font-size:14px;line-height:2;}
+  .start-option-row {display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 18px;}
+  .choice-btn {border:1px solid #5a7ba7;border-radius:11px;background:#112747;color:#b9d1e7;padding:11px 16px;font-weight:750;}
+  .choice-btn.on {background:linear-gradient(120deg,#234f8c,#382c78);border-color:#85dafa;color:white;box-shadow:0 0 13px #58b5ed44;}
+  .selection-badge {text-align:center;border:1px solid #345b7f;border-radius:10px;padding:10px 12px;background:#0c2242aa;color:#badaef;}
+  .order-side {display:flex;flex-direction:column;gap:14px;}
+  .order-side h3 {margin:0 0 2px;font-size:18px;color:#e4f5ff;}
+  .order-side .divider {height:1px;background:linear-gradient(90deg,#4c7fb0,transparent);margin:8px 0;}
+  .result-card {display:grid;grid-template-columns:1fr .84fr;gap:24px;align-items:center;}
+  .result-headline {font-size:clamp(24px,3vw,37px);font-weight:900;margin:8px 0;color:#ffe5ef;text-shadow:0 0 15px #fa789259;}
+  .result-secret {font-size:clamp(50px,7vw,88px);font-weight:950;line-height:1.1;letter-spacing:.07em;color:#e6f9ff;text-shadow:0 0 20px #38b6ed80;}
+  .stat-mini {display:flex;flex-wrap:wrap;gap:12px;color:#abc8e1;font-size:13px;}
+  .modal-backdrop {position:fixed;inset:0;z-index:1000;background:#020615c7;display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(6px);}
+  .modal {width:min(100%,510px);padding:27px;border:1px solid #70b0d8;border-radius:17px;background:linear-gradient(140deg,#142a52,#10172f 78%);box-shadow:0 0 55px #2c65b967,0 20px 80px #000b;}
+  .modal h2 {font-size:23px;margin:0 0 10px;color:#f1f7ff;}
+  .modal p {color:#c0d3e9;line-height:1.8;white-space:pre-line;}
+  .modal .quoted-name {color:#f5f0ff;background:#3e335964;border-radius:8px;padding:9px 12px;overflow-wrap:anywhere;max-height:100px;overflow:auto;}
+  .checkline {display:flex;align-items:flex-start;gap:10px;color:#d9e9fa;font-size:14px;margin:16px 0;cursor:pointer;}
+  .checkline input {width:20px;height:20px;accent-color:#508bdb;flex:0 0 auto;margin-top:2px;}
+  .modal-actions {display:flex;gap:12px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+  .mobile-only {display:none;}
+  @keyframes range-pop {0% {transform:scale(.96);opacity:.6;}100%{transform:scale(1);opacity:1;}}
+  /* 桌機視窗較矮時，稍微收斂留白；避免區間燈條被迫捲出畫面。 */
+  @media(min-width:901px) and (max-height:960px) {
+    .game-board {padding-top:12px;padding-bottom:13px;gap:7px;}
+    .game-board .ring {width:min(100%,365px);margin:2px auto;}
+    .game-board .range-box {padding:7px 12px 8px;}
+    .game-board .range-num {font-size:clamp(34px,4vw,51px);}
+    .game-board .input-card {padding:12px 17px;}
+    .game-board .input-title {margin-bottom:8px;}
+    .game-board .feedback {min-height:18px;margin-top:3px;}
+    .records-panel {padding-top:17px;padding-bottom:14px;}
+  }
+  @media(min-width:901px) and (max-height:800px) {
+    .game-board .ring {width:min(100%,282px);transform:translateY(9px);}
+    .game-board .board-body {min-height:210px;}
+    .game-board .input-card {padding:8px 14px;}
+    .game-board .input-title {font-size:18px;margin-bottom:5px;}
+    .game-board .guess-input {min-height:43px;font-size:19px;}
+    .game-board .input-card .btn {min-height:42px;margin-top:8px!important;}
+    .game-board .range-num {font-size:40px;}
+  }
+  @media(max-width:900px) {
+    .top-decor {display:none;}
+    .main-layout {grid-template-columns:1fr;}
+    .game-board,.records-panel {min-height:0;}
+    .records-panel {padding-bottom:19px;}
+    .record-note {display:none;}
+    .records-scroll {max-height:380px;}
+    .seating-layout,.result-card {grid-template-columns:1fr;}
+    .ring {max-width:420px;}
+    .order-side {max-width:560px;width:100%;margin:0 auto;}
+  }
+  @media(max-width:540px) {
+    .app {padding:8px 10px 20px;}
+    .topbar {gap:9px;min-height:72px;padding:14px 2px 14px;}
+    .brand {gap:10px;flex-wrap:wrap;}
+    .brand h1 {font-size:29px;}
+    .stage-chip {font-size:12px;padding:6px 11px;}
+    .game-board {padding:14px 11px 16px;gap:9px;}
+    .game-board .board-body {min-height:250px;}
+    .game-board .board-body::before,.game-board .board-body::after {display:none;}
+    .ring {width:min(100%,338px);aspect-ratio:1.06;margin:0 auto;}
+    .seat {width:84px;height:88px;}
+    .player-token .avatar {width:51px;height:51px;font-size:20px;}
+    .player-token .avatar svg {width:27px;height:27px;}
+    .player-token .name {min-width:55px;max-width:84px;font-size:min(var(--name-size,12px),12px);padding:3px 4px;}
+    .ring-inner {width:97px;}
+    .ring-inner .turn-arrow {font-size:29px;}
+    .ring-inner .turn-text {font-size:12px;}
+    .ring-loop {border-width:6px;}
+    .board-range-track {padding:7px 9px;gap:7px;}
+    .board-range-track .edge-label {font-size:14px;}
+    .board-range-track .status-label {font-size:10px;letter-spacing:.1em;}
+    .range-num {font-size:40px;}
+    .input-card {padding:14px 12px;}
+    .records-panel {padding:17px 11px;}
+    .records-scroll {max-height:315px;}
+    .records-table {font-size:12px;}
+    .records-table th,.records-table td {padding:9px 3px;}
+    .single-screen {padding:18px 14px;}
+    .player-form-grid {grid-template-columns:1fr;gap:12px;}
+    .form-footer .btn {width:100%;}
+    .modal {padding:20px;}
+    .modal-actions .btn {flex:1;}
+  }
+  @media(prefers-reduced-motion:reduce) { *,*::before,*::after {animation-duration:.01ms!important;transition-duration:.01ms!important;} }
+</style>
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><h1>終極密碼</h1><div id="headerStage" class="stage-chip">玩家設定</div></div>
+    <div id="topDecor" class="top-decor" aria-hidden="true"><small>1</small><div class="number-track" id="numberTrack"><span class="track-fill"></span><i class="marker start"></i><i class="marker end"></i></div><small>100</small></div>
+  </header>
+  <main>
+    <section id="screen-setup" class="panel single-screen" aria-label="玩家設定">
+      <div class="tech-lines"></div><div style="position:relative">
+        <span class="step-label">STEP 01 / PLAYER SETUP</span>
+        <h2 class="screen-title">建立玩家名單</h2>
+        <p class="lead">請選擇玩家人數並輸入每位玩家的暱稱。所有人共用一台裝置，完成後再安排環狀座位。</p>
+        <p class="form-subtitle">玩家人數（2～5 人）</p>
+        <div class="count-row" id="countChoices" aria-label="選擇玩家人數"></div>
+        <p class="form-subtitle">玩家暱稱</p>
+        <div class="player-form-grid" id="playerFields"></div>
+        <div class="help-box">✦ 請盡量使用簡短暱稱。過長暱稱會觸發顯示提醒，需要確認後才能繼續。<br>✦ 玩家圖示會在下一個階段依暱稱輸入順序自動排列，之後可以拖曳交換。</div>
+        <div class="form-footer"><button id="setupNext" class="btn btn-primary">下一步：安排座位 →</button></div>
+        <p class="feedback" id="setupError" role="alert"></p>
+      </div>
+    </section>
+    <section id="screen-seats" class="panel single-screen" aria-label="座位安排" hidden>
+      <div class="tech-lines"></div><div style="position:relative">
+        <span class="step-label">STEP 02 / SEATING</span>
+        <h2 class="screen-title">安排環狀座位</h2>
+        <p class="lead">依照現場座位排列玩家：長按並拖曳一個圖示到另一個圖示上，兩位玩家會直接交換位置，其他玩家保持不動。</p>
+        <div class="seating-layout"><div id="seatRing" class="ring seating" aria-label="可拖曳交換的玩家座位圖"></div>
+          <div><h3 class="form-subtitle">座位操作</h3><ul class="tip-list"><li>拖曳兩個玩家圖示即可交換位置。</li><li>也可以依序點選兩個圖示進行交換。</li><li>其他玩家的位置不會跟著位移。</li><li>完成後，這個排列會保留至遊戲結束。</li></ul>
+            <p class="selection-badge" id="seatHint" aria-live="polite">請調整座位，完成後按下確認。</p>
+            <div class="form-footer" style="justify-content:flex-start"><button id="resetSeats" class="btn btn-ghost">恢復預設排列</button></div>
+          </div>
+        </div>
+        <div class="form-footer"><button class="btn btn-ghost" id="seatsBack">← 返回暱稱設定</button><button id="seatsNext" class="btn btn-primary">確認座位，下一步 →</button></div>
+      </div>
+    </section>
+    <section id="screen-order" class="panel single-screen" aria-label="起始玩家及方向設定" hidden>
+      <div class="tech-lines"></div><div style="position:relative">
+        <span class="step-label">STEP 03 / TURN ORDER</span>
+        <h2 class="screen-title">決定起始玩家與方向</h2>
+        <p class="lead">由隨機抽選或手動指定第一位玩家；3～5 人時，再由這位玩家決定順時針或逆時針。</p>
+        <div class="seating-layout">
+          <div id="orderRing" class="ring" aria-label="起始玩家選擇圖"></div>
+          <div class="order-side">
+            <h3>選擇起始玩家</h3>
+            <div class="start-option-row"><button id="randomMode" class="choice-btn">隨機指定</button><button id="manualMode" class="choice-btn">手動指定</button></div>
+            <button id="rerollStarter" class="btn btn-secondary">↻ 再抽一位玩家</button>
+            <p id="starterStatus" class="selection-badge" aria-live="polite"></p>
+            <div class="divider"></div>
+            <div id="directionArea"><h3>由起始玩家選擇方向</h3>
+              <div class="start-option-row"><button class="choice-btn" id="dirCw">↻ 順時針</button><button class="choice-btn" id="dirCcw">↺ 逆時針</button></div>
+            </div>
+            <div class="help-box" id="twoPlayerInfo" hidden>雙人模式中兩位玩家直接輪流猜測，不需要選擇方向。</div>
+          </div>
+        </div>
+        <div class="form-footer"><button id="orderBack" class="btn btn-ghost">← 返回座位安排</button><button id="startGame" class="btn btn-primary">開始遊戲 →</button></div>
+        <p class="feedback" id="orderError" role="alert"></p>
+      </div>
+    </section>
+    <section id="screen-game" class="main-layout" aria-label="終極密碼遊戲進行中" hidden>
+      <div class="panel game-board"><div class="tech-lines"></div>
+        <div class="board-body"><div id="gameRing" class="ring" aria-label="本局玩家座位與猜測順序"></div></div>
+        <div class="board-range-track" aria-hidden="true"><span class="edge-label">1</span><div class="track-stack"><span class="status-label" id="remainingLabel">剩餘 100 個可能數字</span><div class="number-track compact" id="gameNumberTrack"><span class="track-fill"></span><i class="marker start"></i><i class="marker end"></i></div></div><span class="edge-label">100</span></div>
+        <div class="range-box"><div class="small-kicker">目前有效區間</div><div class="range-num" id="currentRange" aria-live="polite">1 ～ 100</div></div>
+        <div class="input-card">
+          <h2 id="guessTitle" class="input-title">請玩家輸入數字</h2>
+          <form id="guessForm" novalidate><label class="small-kicker" for="guessInput">輸入本回合猜測</label>
+            <input id="guessInput" class="guess-input" type="text" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="1～100 之間的整數（按 Enter 可確認）" aria-describedby="guessError" />
+            <button type="submit" class="btn btn-primary btn-wide" style="margin-top:12px;font-size:17px">確認猜測 ➜</button>
+          </form><p class="feedback" id="guessError" aria-live="polite"></p>
+        </div>
+      </div>
+      <aside class="panel records-panel"><div class="tech-lines"></div>
+        <div class="records-header" style="position:relative"><h2>▤ 猜測紀錄</h2><span class="record-count" id="recordCount">0 次猜測</span></div>
+        <div id="recordsScroll" class="records-scroll" style="position:relative"><table class="records-table"><thead><tr><th>順序</th><th>玩家</th><th>猜測數字</th><th>猜測後區間</th></tr></thead><tbody id="recordsBody"></tbody></table><div id="recordEmpty" class="empty-state">尚無猜測紀錄。<br>第一位玩家即將開始！</div></div>
+        <div class="record-note">DIGITAL RANGE · 1 — 100 · ROUND LOG</div>
+        <div class="records-actions" style="position:relative"><button class="btn btn-secondary actions-btn" id="gameReplay"><span>↻ 再玩一局</span><span class="actions-hint">重新產生終極密碼</span></button><button class="btn btn-secondary actions-btn" id="gameSettings"><span>⚙ 返回遊戲設定</span><span class="actions-hint">可修改人數與暱稱</span></button></div>
+      </aside>
+    </section>
+    <section id="screen-result" class="panel single-screen" aria-label="遊戲結束" hidden>
+      <div class="tech-lines"></div><div style="position:relative">
+        <span class="step-label">GAME OVER / RESULT</span>
+        <h2 class="screen-title">遊戲結束！</h2>
+        <div class="result-card">
+          <div><div id="resultRing" class="ring" aria-label="遊戲結果玩家環狀圖"></div></div>
+          <div><span class="small-kicker">終極密碼</span><div id="finalSecret" class="result-secret">?</div><p class="result-headline" id="loserText"></p><div id="resultStats" class="stat-mini"></div>
+            <div class="form-footer" style="justify-content:flex-start"><button id="resultReplay" class="btn btn-primary">↻ 再玩一局</button><button id="resultSettings" class="btn btn-secondary">⚙ 返回遊戲設定</button></div>
+            <p class="field-warn">返回設定可修改玩家人數、暱稱與座位位置。</p>
+          </div>
+        </div>
+        <div class="records-header" style="margin-top:27px"><h2 style="font-size:20px">本局猜測紀錄</h2><span id="resultRecordCount" class="record-count"></span></div>
+        <div class="records-scroll" style="max-height:260px"><table class="records-table"><thead><tr><th>順序</th><th>玩家</th><th>猜測數字</th><th>猜測後區間</th></tr></thead><tbody id="resultRecordsBody"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="modalBackdrop" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle"></h2><p id="modalText"></p><div id="modalExtra"></div>
+    <div class="modal-actions"><button type="button" id="modalCancel" class="btn btn-ghost">取消</button><button type="button" id="modalConfirm" class="btn btn-primary">確認</button></div>
+  </div>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const colors = [
+    { tint:'#e880a5', glow:'#e76d9a92' },
+    { tint:'#70b8fc', glow:'#388de78c' },
+    { tint:'#68d3c7', glow:'#31cdb37a' },
+    { tint:'#e6bc8d', glow:'#cb9b777a' },
+    { tint:'#b693f2', glow:'#9963f59c' }
+  ];
+  let serial = 0;
+  const newDraft = () => ({ id:'p'+(++serial), name:'' });
+  const state = {
+    stage:'setup', count:3, draft:[newDraft(),newDraft(),newDraft()],
+    players:[], seats:[], selectedSeat:null, starterMode:'random', starterId:null, direction:null,
+    secret:null, low:1, high:100, currentId:null, history:[], loserId:null,
+    longConfirmed:new Map(), modal:null, pendingAdvance:false
+  };
+  function escapeHtml(x) { return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function nameOf(id) { return state.players.find(p=>p.id===id)?.name ?? '未知玩家'; }
+  function widthUnits(s) { return [...s].reduce((sum,c)=>sum+(/[\u1100-\u11ff\u2e80-\u9fff\uac00-\ud7af\uf900-\ufaff\uff01-\uff60\uffe0-\uffe6]/u.test(c)?2:1),0); }
+  function nicknameFontSize(s) { const l=widthUnits(s); return l>26?'10px':l>18?'11px':l>12?'12px':'13px'; }
+  function isLong(s) { return widthUnits(s.trim())>16; }
+  function show(stage) {
+    state.stage=stage;
+    for(const s of ['setup','seats','order','game','result']) $('screen-'+s).hidden=s!==stage;
+    const labels={setup:'玩家設定',seats:'座位安排',order:'起始玩家與方向',game:`第 ${state.history.length+1} 回合`,result:'遊戲結束'};
+    $('headerStage').textContent=labels[stage];
+    $('topDecor').hidden = stage==='game' || stage==='result';
+    const inRound = stage==='game' || stage==='result';
+    const lowPercent = inRound ? (state.low-1)/99*100 : 0;
+    const highPercent = inRound ? (state.high-1)/99*100 : 100;
+    $('remainingLabel').textContent = inRound
+      ? `剩餘 ${state.high-state.low+1} 個可能數字`
+      : '剩餘 100 個可能數字';
+    for (const id of ['numberTrack','gameNumberTrack']) {
+      const track = $(id);
+      if (!track) continue;
+      const fill = track.querySelector('.track-fill');
+      const start = track.querySelector('.marker.start');
+      const end = track.querySelector('.marker.end');
+      start.style.left = `${lowPercent}%`;
+      end.style.left = `${highPercent}%`;
+      fill.style.left = `${lowPercent}%`;
+      fill.style.width = `${Math.max(0,highPercent-lowPercent)}%`;
+      const oneNumberLeft = inRound && state.low === state.high;
+      fill.classList.toggle('single-point',oneNumberLeft);
+      end.style.opacity = oneNumberLeft ? '0' : '1';
+    }
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  // ----- Setup -----
+  function saveDraftInputs() {
+    document.querySelectorAll('[data-name-index]').forEach(input => {
+      const i=Number(input.dataset.nameIndex), p=state.draft[i];
+      if(!p)return;
+      if(p.name!==input.value) {p.name=input.value;state.longConfirmed.delete(p.id);}
+    });
+  }
+  function renderSetup() {
+    $('countChoices').innerHTML=[2,3,4,5].map(n=>`<button type="button" class="count-btn ${n===state.count?'on':''}" data-count="${n}" aria-pressed="${n===state.count}">${n}</button>`).join('');
+    $('playerFields').innerHTML=state.draft.map((p,i)=>`<div class="player-form-field"><label for="playerName${i}">玩家 ${i+1} 暱稱</label><input id="playerName${i}" class="name-input" data-name-index="${i}" type="text" value="${escapeHtml(p.name)}" autocomplete="off" maxlength="100" placeholder="請輸入暱稱" aria-describedby="nicknameWarn${i}"><p class="field-warn ${isLong(p.name)?'over':''}" id="nicknameWarn${i}">建議中文約 8 字以內；過長可能無法完整顯示。</p></div>`).join('');
+    $('setupError').textContent='';
+    $('countChoices').querySelectorAll('[data-count]').forEach(btn=>btn.addEventListener('click',()=>{
+      saveDraftInputs(); const n=Number(btn.dataset.count); while(state.draft.length<n)state.draft.push(newDraft());
+      state.draft=state.draft.slice(0,n);state.count=n;renderSetup();
+    }));
+    $('playerFields').querySelectorAll('[data-name-index]').forEach(input=>{
+      const i=Number(input.dataset.nameIndex);
+      input.addEventListener('input',()=>{
+        const p=state.draft[i];if(p.name!==input.value){p.name=input.value;state.longConfirmed.delete(p.id);}
+        $('nicknameWarn'+i).classList.toggle('over',isLong(p.name));$('setupError').textContent='';
+      });
+      input.addEventListener('blur',()=>{
+        const p=state.draft[i];if(isLong(p.name)&&state.longConfirmed.get(p.id)!==p.name.trim()&&!state.modal){
+          askLongName(p, false);
+        }
+      });
+    });
+  }
+  function askLongName(p, continuing) {
+    const value=p.name.trim();
+    openModal({title:'暱稱過長提醒',text:'這個暱稱較長，系統會嘗試自動縮小字體，但部分裝置可能無法完整顯示。你可以返回修改，或勾選確認後繼續。', extraName:value,checkboxLabel:'我已閱讀並了解暱稱過長可能影響顯示。',confirmText:'確認使用此暱稱',onConfirm:()=>{
+      state.longConfirmed.set(p.id,value);
+      if(continuing) continueSetup();
+    }, onCancel:()=>{state.pendingAdvance=false;} });
+  }
+  function continueSetup() {
+    saveDraftInputs();
+    if(state.draft.some(p=>!p.name.trim())) { $('setupError').textContent='所有玩家都必須輸入暱稱，才能繼續。';show('setup');return; }
+    const long=state.draft.find(p=>isLong(p.name)&&state.longConfirmed.get(p.id)!==p.name.trim());
+    if(long) {askLongName(long,true);return;}
+    const oldIds=new Set(state.players.map(p=>p.id));
+    const newIds=state.draft.map(p=>p.id);
+    const canKeep=state.seats.length===newIds.length&&newIds.every(id=>oldIds.has(id));
+    state.players=state.draft.map(p=>({id:p.id,name:p.name.trim()}));
+    state.seats=canKeep?[...state.seats]:[...newIds];
+    state.selectedSeat=null;
+    renderSeats();show('seats');
+  }
+  $('setupNext').addEventListener('click',continueSetup);
+  // ----- Ring and swapping -----
+  function playerAtSeat(index) {return state.players.find(p=>p.id===state.seats[index]);}
+  function ringMarkup(mode) {
+    const n=state.seats.length;
+    const chosen=mode==='seats'?state.selectedSeat:null;
+    let html='<div class="ring-loop"></div>';
+    const arrow=mode==='seats'?'⇄':state.direction==='ccw'?'↶':mode==='order'&&!state.direction?'↻':'↷';
+    const desc=mode==='seats'?'拖曳交換':mode==='order'?'起始玩家':n===2?'雙人輪替':state.direction==='ccw'?'逆時針':'順時針';
+    html+=`<div class="ring-inner"><span class="turn-arrow">${arrow}</span><span class="turn-text">${desc}</span></div>`;
+    state.seats.forEach((id,i)=>{
+      const p=playerAtSeat(i), angle=(-90+360*i/n)*Math.PI/180;
+      const x=50+39*Math.cos(angle),y=50+39*Math.sin(angle);
+      const c=colors[state.players.findIndex(v=>v.id===id)%colors.length];
+      const isActive=(mode==='game'&&state.currentId===id)||(mode==='order'&&state.starterId===id);
+      const isLoser=mode==='result'&&state.loserId===id;
+      const selectable=mode==='seats'||(mode==='order'&&state.starterMode==='manual');
+      html+=`<div class="seat ${chosen===i?'swap-selected':''}" data-slot="${i}" style="left:${x}%;top:${y}%"><button type="button" class="player-token ${isActive?'active':''} ${isLoser?'loser':''} ${selectable?'selectable':''}" data-player-id="${escapeHtml(id)}" style="--tint:${c.tint};--glow:${c.glow};--name-size:${nicknameFontSize(p.name)}" title="${escapeHtml(p.name)}" aria-label="玩家${escapeHtml(p.name)}${isActive?'，目前選取':''}"><span class="avatar" aria-hidden="true"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" focusable="false"><circle cx="20" cy="12" r="8" fill="currentColor"/><path d="M7 34v-3c0-8 6-13 13-13s13 5 13 13v3c0 1-1 2-2 2H9c-1 0-2-1-2-2z" fill="currentColor"/></svg></span><span class="name">${escapeHtml(p.name)}</span></button></div>`;
+    });
+    return html;
+  }
+  function renderRing(id,mode) {
+    const root=$(id);root.classList.toggle('seating',mode==='seats');root.innerHTML=ringMarkup(mode);
+    if(mode==='seats') attachSeatDragging(root);
+    if(mode==='order'&&state.starterMode==='manual') {
+      root.querySelectorAll('.player-token').forEach(node=>node.addEventListener('click',()=>{state.starterId=node.dataset.playerId;renderOrder();}));
+    }
+    if(mode==='game'||mode==='result') root.querySelectorAll('.player-token').forEach(node=>node.addEventListener('click',()=>{
+      const p=state.players.find(p=>p.id===node.dataset.playerId);
+      if(p) openModal({title:'玩家暱稱',text:p.name,confirmText:'關閉',hideCancel:true});
+    }));
+  }
+  function swapSeats(a,b) {
+    if(a===b)return;
+    [state.seats[a],state.seats[b]]=[state.seats[b],state.seats[a]];
+    state.selectedSeat=null;renderSeats();
+    $('seatHint').textContent='已交換兩位玩家的位置。其他玩家位置不變。';
+  }
+  function clickSeat(index) {
+    if(state.selectedSeat===null) {state.selectedSeat=index;$('seatHint').textContent='已選取第一位玩家，請再點選要交換的玩家。';renderRing('seatRing','seats');}
+    else if(state.selectedSeat===index) {state.selectedSeat=null;$('seatHint').textContent='已取消選取。';renderRing('seatRing','seats');}
+    else swapSeats(state.selectedSeat,index);
+  }
+  function attachSeatDragging(root) {
+    root.querySelectorAll('.player-token').forEach(token=>{
+      let drag=null;
+      token.addEventListener('click',()=>{if(token.dataset.suppressClick==='1'){token.dataset.suppressClick='0';return;}clickSeat(Number(token.parentElement.dataset.slot));});
+      token.addEventListener('pointerdown',event=>{
+        if(event.button!==0)return;
+        drag={x:event.clientX,y:event.clientY,index:Number(token.parentElement.dataset.slot),moved:false,target:null};
+        token.setPointerCapture(event.pointerId);
+      });
+      token.addEventListener('pointermove',event=>{
+        if(!drag)return;
+        const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+        if(!drag.moved&&Math.hypot(dx,dy)<7)return;
+        drag.moved=true;
+        token.classList.add('dragging');token.style.transform=`translate(${dx}px,${dy}px) scale(1.08)`;
+        token.parentElement.style.zIndex='8';
+        const slots=[...root.querySelectorAll('.seat')];let nearest=null,dist=Infinity;
+        for(const seat of slots) {const j=Number(seat.dataset.slot);if(j===drag.index)continue;
+          const rect=seat.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+          const d=Math.hypot(cx-event.clientX,cy-event.clientY);
+          if(d<dist){dist=d;nearest=j;}
+        }
+        drag.target=dist<=70?nearest:null;
+        slots.forEach(seat=>seat.classList.toggle('drop-target',Number(seat.dataset.slot)===drag.target));
+      });
+      token.addEventListener('pointerup',event=>{
+        if(!drag)return;
+        const info=drag;drag=null;
+        if(info.moved){event.preventDefault();token.dataset.suppressClick='1';
+          if(info.target!==null)swapSeats(info.index,info.target);
+          else {token.style.transform='';token.classList.remove('dragging');token.parentElement.style.zIndex='';root.querySelectorAll('.seat').forEach(s=>s.classList.remove('drop-target'));}
+        }
+      });
+      token.addEventListener('pointercancel',()=>{drag=null;token.style.transform='';token.classList.remove('dragging');token.parentElement.style.zIndex='';root.querySelectorAll('.seat').forEach(s=>s.classList.remove('drop-target'));});
+    });
+  }
+  function renderSeats() {renderRing('seatRing','seats');$('seatHint').textContent='請調整座位，完成後按下確認。';}
+  $('resetSeats').addEventListener('click',()=>{state.seats=state.players.map(p=>p.id);state.selectedSeat=null;renderSeats();$('seatHint').textContent='已恢復最初輸入順序。';});
+  $('seatsBack').addEventListener('click',()=>{renderSetup();show('setup');});
+  $('seatsNext').addEventListener('click',()=>{prepareOrder();show('order');});
+  // ----- Starter + direction -----
+  function randomStarter() {return state.seats[Math.floor(Math.random()*state.seats.length)];}
+  function prepareOrder() {
+    state.starterMode='random';state.starterId=randomStarter();state.direction=state.seats.length===2?'two':null;
+    renderOrder();
+  }
+  function renderOrder() {
+    $('randomMode').classList.toggle('on',state.starterMode==='random');
+    $('manualMode').classList.toggle('on',state.starterMode==='manual');
+    $('rerollStarter').hidden=state.starterMode!=='random';
+    $('starterStatus').textContent=state.starterId?`目前起始玩家：${nameOf(state.starterId)}`:'請點選環狀圖示，指定一位起始玩家。';
+    $('directionArea').hidden=state.seats.length===2;$('twoPlayerInfo').hidden=state.seats.length!==2;
+    $('dirCw').classList.toggle('on',state.direction==='cw');$('dirCcw').classList.toggle('on',state.direction==='ccw');
+    $('orderError').textContent='';renderRing('orderRing','order');
+  }
+  $('randomMode').addEventListener('click',()=>{state.starterMode='random';state.starterId=randomStarter();renderOrder();});
+  $('manualMode').addEventListener('click',()=>{state.starterMode='manual';state.starterId=null;renderOrder();});
+  $('rerollStarter').addEventListener('click',()=>{state.starterId=randomStarter();renderOrder();});
+  $('dirCw').addEventListener('click',()=>{state.direction='cw';renderOrder();});
+  $('dirCcw').addEventListener('click',()=>{state.direction='ccw';renderOrder();});
+  $('orderBack').addEventListener('click',()=>{renderSeats();show('seats');});
+  $('startGame').addEventListener('click',()=>{
+    if(!state.starterId){$('orderError').textContent='請先指定起始玩家。';return;}
+    if(state.seats.length>2&&!['cw','ccw'].includes(state.direction)){$('orderError').textContent='請由起始玩家選擇遊玩方向。';return;}
+    state.secret=Math.floor(Math.random()*100)+1;
+    state.low=1;state.high=100;state.currentId=state.starterId;state.history=[];state.loserId=null;
+    renderGame();show('game');$('guessInput').focus({preventScroll:true});
+  });
+  // ----- Game logic -----
+  function nextPlayer(id) {const pos=state.seats.indexOf(id);if(pos===-1)throw Error('玩家座位資料不正確');const step=state.direction==='ccw'?-1:1;return state.seats[(pos+step+state.seats.length)%state.seats.length];}
+  function recordRows(history) {return history.map((h,i)=>`<tr><td>${i+1}</td><td title="${escapeHtml(nameOf(h.playerId))}">${escapeHtml(nameOf(h.playerId))}</td><td>${h.value}</td><td>${h.hit?'<span style="color:#ff9fb4;font-weight:800">猜中／落敗</span>':`${h.low}～${h.high}`}</td></tr>`).join('');}
+  function renderGame() {
+    show('game');renderRing('gameRing','game');
+    $('currentRange').textContent=`${state.low} ～ ${state.high}`;
+    $('currentRange').classList.remove('animated');void $('currentRange').offsetWidth;$('currentRange').classList.add('animated');
+    $('guessTitle').textContent=`請 ${nameOf(state.currentId)} 輸入數字`;
+    $('guessInput').placeholder=window.matchMedia('(max-width:540px)').matches
+      ? `${state.low}～${state.high}（按 Enter 確認）`
+      : `${state.low}～${state.high} 之間的整數（按 Enter 可確認）`;
+    $('guessInput').value='';$('guessError').textContent='';
+    $('recordsBody').innerHTML=recordRows(state.history);
+    $('recordEmpty').hidden=state.history.length!==0;
+    $('recordCount').textContent=`${state.history.length} 次猜測`;
+    const scroller=$('recordsScroll');scroller.scrollTop=scroller.scrollHeight;
+  }
+  $('guessForm').addEventListener('submit',event=>{
+    event.preventDefault();if(state.stage!=='game')return;
+    const raw=$('guessInput').value.trim();const error=$('guessError');
+    if(!/^\d+$/.test(raw)){error.textContent='請輸入目前有效區間內的整數，不可空白或輸入其他字元。';return;}
+    const value=Number(raw);
+    if(!Number.isSafeInteger(value)||value<state.low||value>state.high){error.textContent=`請輸入 ${state.low}～${state.high} 之間的整數。`;return;}
+    const hit=value===state.secret;
+    if(!hit){if(value<state.secret)state.low=value+1;else state.high=value-1;}
+    state.history.push({playerId:state.currentId,value,low:state.low,high:state.high,hit});
+    if(hit) {state.loserId=state.currentId;renderResult();show('result');return;}
+    state.currentId=nextPlayer(state.currentId);renderGame();$('guessInput').focus({preventScroll:true});
+  });
+  $('guessInput').addEventListener('input',()=>{$('guessError').textContent='';});
+  function renderResult() {
+    $('finalSecret').textContent=state.secret;
+    $('loserText').textContent=`${nameOf(state.loserId)} 猜中密碼，落敗！`;
+    $('resultStats').innerHTML=`<span>👥 ${state.seats.length} 位玩家</span><span>▤ 共 ${state.history.length} 次有效猜測</span>`;
+    $('resultRecordCount').textContent=`${state.history.length} 次猜測`;
+    $('resultRecordsBody').innerHTML=recordRows(state.history);
+    renderRing('resultRing','result');
+  }
+  function goNewGame() {prepareOrder();show('order');}
+  function goSettings() {state.draft=state.players.map(p=>({...p}));state.count=state.draft.length;renderSetup();show('setup');}
+  function actionWhilePlaying(kind) {
+    const newGame=kind==='replay';
+    openModal({title:newGame?'確定要重新開始嗎？':'確定要返回遊戲設定嗎？',
+      text:newGame?'目前這一局尚未結束，重新開始將清除當局密碼與全部猜測紀錄。玩家暱稱及座位安排會保留。':'目前這一局尚未結束，返回設定將清除當局密碼與全部猜測紀錄。你可以重新修改玩家人數、暱稱及座位。',
+      confirmText:newGame?'確認重新開始':'確認返回設定',onConfirm:newGame?goNewGame:goSettings});
+  }
+  $('gameReplay').addEventListener('click',()=>actionWhilePlaying('replay'));
+  $('gameSettings').addEventListener('click',()=>actionWhilePlaying('settings'));
+  $('resultReplay').addEventListener('click',goNewGame);
+  $('resultSettings').addEventListener('click',goSettings);
+  // ----- Generic accessible modal -----
+  function openModal(cfg) {
+    if(state.modal)return;
+    state.modal=cfg;$('modalTitle').textContent=cfg.title;$('modalText').textContent=cfg.text;
+    const extra=$('modalExtra');extra.innerHTML='';
+    if(cfg.extraName!==undefined){const p=document.createElement('p');p.className='quoted-name';p.textContent=cfg.extraName;extra.append(p);}
+    let check=null;
+    if(cfg.checkboxLabel){const label=document.createElement('label');label.className='checkline';check=document.createElement('input');check.type='checkbox';const span=document.createElement('span');span.textContent=cfg.checkboxLabel;label.append(check,span);extra.append(label);check.addEventListener('change',()=>{$('modalConfirm').disabled=!check.checked;});}
+    $('modalCancel').hidden=!!cfg.hideCancel;
+    $('modalConfirm').textContent=cfg.confirmText||'確認';$('modalConfirm').disabled=!!check;
+    $('modalBackdrop').hidden=false;
+    $('modalConfirm').focus({preventScroll:true});
+  }
+  function closeModal(ok) {
+    const cfg=state.modal;if(!cfg)return;
+    state.modal=null;$('modalBackdrop').hidden=true;
+    if(ok)cfg.onConfirm?.();else cfg.onCancel?.();
+  }
+  $('modalCancel').addEventListener('click',()=>closeModal(false));
+  $('modalConfirm').addEventListener('click',()=>{if(!$('modalConfirm').disabled)closeModal(true);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal&&!state.modal.hideCancel)closeModal(false);});
+  // ----- Initialize -----
+  renderSetup();show('setup');
+})();
+</script>
+</body>
+</html>
